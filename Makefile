@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -pthread -g
+CFLAGS = -Wall -pthread -g -fsanitize=thread # ThreadSanitizer is active, deactivate before production
 LDFLAGS = -lm
 TARGET = tcas-ii-sim
 SRCS = main.c storage.c transponder_data.c tracker.c tcas_logic.c display.c audio.c
