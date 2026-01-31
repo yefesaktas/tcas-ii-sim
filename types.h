@@ -31,6 +31,7 @@ typedef struct {
     double distance;          // meters
     double bearing;           // radians
     double closure_rate;      // meters/seconds
+    double time_to_impact;    // seconds
 
     AircraftState state;
     uint8_t threat_level; // holds ThreatLevel (size optimized with uint8_t)
