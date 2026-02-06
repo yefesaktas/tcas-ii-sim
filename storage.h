@@ -2,6 +2,11 @@
 #define STORAGE_H
 
 #include "types.h"
+#include <stdio.h>
+#include <stdatomic.h>
+
+// flag variable that will be used for graceful shutdown
+extern volatile atomic_bool SIGINT_signaled;
 
 // function prototypes
 void init_buffer(void);

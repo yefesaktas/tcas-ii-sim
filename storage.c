@@ -1,6 +1,7 @@
 #include "storage.h"
 #include <string.h>
 
+volatile atomic_bool SIGINT_signaled = 0;
 static SimulationState simWorld; // prevent access from outside with extern keyword by using static keyword
 
 void init_buffer(void){
