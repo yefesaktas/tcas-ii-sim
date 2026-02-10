@@ -1,5 +1,12 @@
 #include "storage.h"
+
 #include <string.h>
+#include <stdatomic.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <pthread.h>
+
+#include "types.h"
 
 volatile atomic_bool SIGINT_signaled = 0;
 static SimulationState simWorld; // prevent access from outside with extern keyword by using static keyword

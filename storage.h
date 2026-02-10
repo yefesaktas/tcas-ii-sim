@@ -1,9 +1,10 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
-#include "types.h"
-#include <stdio.h>
+#include <stdint.h>
 #include <stdatomic.h>
+
+#include "types.h"
 
 // flag variable that will be used for graceful shutdown
 extern volatile atomic_bool SIGINT_signaled;

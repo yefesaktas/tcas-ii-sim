@@ -1,6 +1,11 @@
 #include "transponder_data.h"
-#include "storage.h"
+
 #include <unistd.h>
+#include <stdio.h>
+#include <stdint.h>
+
+#include "types.h"
+#include "storage.h"
 
 #define UPDATE_PERIOD_US 500000 // 0.5 seconds (in microseconds)
 #define DELTA_TIME 0.5
