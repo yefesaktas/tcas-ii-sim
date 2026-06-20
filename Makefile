@@ -1,14 +1,30 @@
 CC = gcc
-CFLAGS = -Wall -pthread -g -fsanitize=thread # ThreadSanitizer is active, deactivate before production
-LDFLAGS = -lm
-TARGET = tcas-ii-sim
-SRCS = main.c storage.c transponder_data.c tracker.c tcas_logic.c display.c audio.c
-OBJS = $(SRCS:.c=.o)
+CFLAGS = -Wall -pthread -g -fsanitize=thread -I./include # ThreadSanitizer is active, deactivate before production
 
-all: $(TARGET)
+LDFLAGS = -lm -lncursesw
+
+# --- FILE PATHS ---
+SRC_DIR = src
+INC_DIR = include
+BUILD_DIR = build
+
+TARGET = $(BUILD_DIR)/tcas-ii-sim
+
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
+
+all: directories $(TARGET)
+
+directories:
+	@mkdir -p $(BUILD_DIR)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(BUILD_DIR)
+
+.PHONY: all clean directories

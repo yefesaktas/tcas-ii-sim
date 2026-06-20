@@ -29,6 +29,7 @@
 *.dylib
 
 # Executables
+build/
 *.exe
 *.out
 *.app
@@ -53,6 +54,3 @@ dkms.conf
 
 # debug information files
 *.dwo
-
-# executable files
-bin/
