@@ -1,3 +1,13 @@
+/**
+ * @file storage.c
+ * @brief Thread-safe storage implementation for the simulation state.
+ *
+ * Implements buffer initialization, update helpers and snapshot accessors
+ * used by producer and consumer threads.
+ * @author Yusuf Efe Aktaş
+ * @date 2026-01-27
+ */
+
 #include "storage.h"
 
 #include <string.h>
@@ -8,7 +18,7 @@
 
 #include "types.h"
 
-volatile atomic_bool SIGINT_signaled = 0;
+volatile atomic_bool isSIGINT_signaled = 0;
 static SimulationState simWorld; // prevent access from outside with extern keyword by using static keyword
 
 void init_buffer(void){

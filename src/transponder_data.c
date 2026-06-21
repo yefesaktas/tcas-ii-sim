@@ -1,3 +1,13 @@
+/**
+ * @file transponder_data.c
+ * @brief Simulate periodic transponder broadcasts for host and intruders.
+ *
+ * Implements the transponder producer thread routine that updates the
+ * shared `SimulationState` via the storage API.
+ * @author Yusuf Efe Aktaş
+ * @date 2026-01-27
+ */
+
 #include "transponder_data.h"
 
 #include <unistd.h>
@@ -7,9 +17,26 @@
 #include "types.h"
 #include "storage.h"
 
-#define UPDATE_PERIOD_US 500000 // 0.5 seconds (in microseconds)
+/**
+ * @brief Period between transponder updates (microseconds).
+ *
+ * The simulated transponder thread sleeps this long between each
+ * broadcast/update cycle.
+ */
+#define UPDATE_PERIOD_US 500000
+
+/**
+ * @brief Simulation timestep in seconds used to advance simple physics.
+ */
 #define DELTA_TIME 0.5
-#define INTRUDERS_NUM 1 // TEST
+
+/**
+ * @brief Number of intruder aircraft simulated.
+ *
+ * Set to 1 for the simple test scenario; real simulations may use
+ * multiple intruders up to `MAX_TRACK`.
+ */
+#define INTRUDERS_NUM 1
 
 static AircraftState host_state;
 static uint32_t host_ModeS;
@@ -17,6 +44,12 @@ static uint32_t host_ModeS;
 static AircraftState intruder_state[INTRUDERS_NUM];
 static uint32_t intruder_ModeS[INTRUDERS_NUM];
 
+/**
+ * @brief Initialize a simple scenario for host and intruder(s).
+ *
+ * Sets initial positions, velocities and Mode-S identifiers used by the
+ * simulated transponder updates.
+ */
 static void init_scenerio(){
     // initial coordinate and mode-s inputs
 
@@ -47,6 +80,11 @@ static void init_scenerio(){
     intruder_state[0].vz = 0;
 } // init_scenerio end
 
+/**
+ * @brief Advance the simulated aircraft states by one timestep.
+ *
+ * Applies a simple constant-velocity integration using `DELTA_TIME`.
+ */
 static void update_physics(){
     // update host aircraft data
     host_state.x += host_state.vx * DELTA_TIME;
@@ -61,12 +99,24 @@ static void update_physics(){
     } // for end
 } // update_physics end
 
+/**
+ * @brief Thread routine that periodically publishes transponder data.
+ *
+ * The thread initializes a scenario, then loops until
+ * `isSIGINT_signaled` is set. On each iteration it advances the
+ * internal physics, writes ownship and intruder states to the shared
+ * buffer using `set_OwnShip_state` / `set_IntruderShip_state`, and
+ * sleeps for `UPDATE_PERIOD_US` microseconds.
+ *
+ * @param arg Unused thread argument (may be NULL).
+ * @return void* Always returns NULL.
+ */
 void* transponder_data_thread(void* arg){ // thread function
     init_scenerio();
 
     printf("[TRANSPONDER THREAD] AVAIL\n");
 
-    while (!SIGINT_signaled){
+    while (!isSIGINT_signaled){
         update_physics();
 
         set_OwnShip_state(&host_state, host_ModeS);
