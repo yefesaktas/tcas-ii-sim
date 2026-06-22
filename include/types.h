@@ -6,6 +6,12 @@
  * simulator (ownship, intruder tracks, and the global simulation state).
  * @author Yusuf Efe Aktaş
  * @date 2026-01-27
+ *
+ * \msc
+ * Producer, SimulationState, Consumer;
+ * Producer->SimulationState [label="write state / update values"];
+ * SimulationState->Consumer [label="get_buffer_snapshot()"];
+ * \endmsc
  */
 
 #ifndef TYPES_H
@@ -14,9 +20,9 @@
 /**
  * @brief Maximum number of intruder tracks supported by the simulation.
  *
- * TCAS II version 7.1 can track up to 30 transponder-equipped aircraft
- * simultaneously; this constant bounds the intruder array sizes used
- * throughout the simulator.
+ * @details TCAS II version 7.1 can track up to 30 transponder-equipped
+ * aircraft simultaneously; this constant bounds the intruder array sizes
+ * used throughout the simulator.
  */
 #define MAX_TRACK 30 
 
@@ -24,11 +30,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/**
- * @brief Threat level classification used by the TCAS logic.
- *
- * 
- */
+/** @brief Threat level classification used by the TCAS logic. */
 typedef enum {
     THREAT_NONE = 0, /**< No advisory required. */
     THREAT_TA   = 1, /**< Traffic advisory (TA): traffic nearby but no RA. */
@@ -36,9 +38,11 @@ typedef enum {
 } ThreatLevel;
 
 /**
- * @brief Represents an aircraft's 3D position and velocity.
+ * @brief Aircraft 3D position and velocity.
  *
- *
+ * @details Positions are in meters in an Earth-relative Cartesian frame
+ * and velocities are in meters/second. `z` and `vz` represent altitude and
+ * vertical speed respectively.
  */
 typedef struct {
     double x, y, z;           /**< Position in meters (Cartesian frame). */
@@ -46,9 +50,10 @@ typedef struct {
 } AircraftState;
 
 /**
- * @brief State and identifier for the host (own) aircraft.
+ * @brief Host (own) aircraft identifier and state.
  *
- *
+ * @details Contains the Mode-S identifier (`mode_s_code`) and the current
+ * `AircraftState` for the ownship.
  */
 typedef struct {    
     uint32_t mode_s_code;     /**< Mode-S transponder code (24-bit identifier). */
@@ -59,7 +64,10 @@ typedef struct {
 /**
  * @brief Data describing a tracked intruder aircraft.
  *
- *
+ * @details `isActive` indicates whether this array slot currently holds a
+ * valid intruder. Positional and relative metrics are provided alongside the
+ * intruder's full `AircraftState`. `threat_level` stores a value from
+ * `ThreatLevel`.
  */
 typedef struct {
     bool isActive;            /**< true if this slot holds a valid intruder. */
@@ -78,7 +86,10 @@ typedef struct {
 /**
  * @brief Global simulation state container.
  *
- *
+ * @details Holds the current `OwnShip` data, an array of tracked
+ * `IntruderShip` entries (size `MAX_TRACK`), and a mutex
+ * (`state_access_lock`) used to synchronize concurrent access between
+ * producer and consumer threads.
  */
 typedef struct {
     OwnShip host_aircraft;                    /**< Data for the ownship. */

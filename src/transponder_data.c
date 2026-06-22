@@ -49,6 +49,11 @@ static uint32_t intruder_ModeS[INTRUDERS_NUM];
  *
  * Sets initial positions, velocities and Mode-S identifiers used by the
  * simulated transponder updates.
+ *
+ * \msc
+ * TransponderThread, Init;
+ * TransponderThread->Init [label="init_scenerio(): set host_state / intruder_state"];
+ * \endmsc
  */
 static void init_scenerio(){
     // initial coordinate and mode-s inputs
@@ -84,6 +89,12 @@ static void init_scenerio(){
  * @brief Advance the simulated aircraft states by one timestep.
  *
  * Applies a simple constant-velocity integration using `DELTA_TIME`.
+ *
+ * \msc
+ * TransponderThread, Physics;
+ * TransponderThread->Physics [label="update_physics(): advance positions"];
+ * Physics->TransponderThread [label="updated host_state / intruder_state"];
+ * \endmsc
  */
 static void update_physics(){
     // update host aircraft data

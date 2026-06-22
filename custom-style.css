@@ -1,0 +1,8 @@
+/* Automatically adjust mscgen graph colors */
+@media (prefers-color-scheme: dark) {
+    img[src*="msc"] {
+        filter: invert(1) hue-rotate(180deg) brightness(1.1);
+        background-color: transparent !important;
+        border: none !important;
+    }
+}
