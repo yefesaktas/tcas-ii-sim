@@ -1,0 +1,2 @@
+# Hide doxygen CSS theme files from Github language statistics
+*.css linguist-vendored
