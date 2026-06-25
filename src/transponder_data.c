@@ -110,18 +110,6 @@ static void update_physics(){
     } // for end
 } // update_physics end
 
-/**
- * @brief Thread routine that periodically publishes transponder data.
- *
- * The thread initializes a scenario, then loops until
- * `isSIGINT_signaled` is set. On each iteration it advances the
- * internal physics, writes ownship and intruder states to the shared
- * buffer using `set_OwnShip_state` / `set_IntruderShip_state`, and
- * sleeps for `UPDATE_PERIOD_US` microseconds.
- *
- * @param arg Unused thread argument (may be NULL).
- * @return void* Always returns NULL.
- */
 void* transponder_data_thread(void* arg){ // thread function
     init_scenerio();
 
