@@ -36,7 +36,7 @@ To build and run this project, ensure you have the following installed on your L
 
 * **GCC** (GNU Compiler Collection)
 * **Make**
-* **NCurses** (Wide character support: `libncursesw5-dev`)
+* **NCurses** (Wide character support: `libncurses-dev`)
 * **Doxygen & Graphviz** (For generating documentation and graphs)
 * **Mscgen** (For Message Sequence Charts)
 
