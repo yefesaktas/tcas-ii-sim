@@ -69,6 +69,14 @@ To generate the latest HTML documentation:
 
 Once generated, open `docs/html/index.html` in your preferred web browser to explore the API references, structs, enums, and sequence graphs.
 
+## Acknowledgments
+
+[IVAO Documentation Library, Traffic collision avoidance system - TCAS](https://wiki.ivao.aero/en/home/training/documentation/Traffic_collision_avoidance_system-TCAS)
+
 ## Author
 
 Yusuf Efe Aktaş
+
+## License
+
+This project is licensed under the MIT License.
