@@ -13,6 +13,7 @@
 #include <ncurses.h>
 #include <locale.h>
 #include <unistd.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdint.h>
 
@@ -30,7 +31,7 @@
 static WINDOW* radar_win;
 static WINDOW* telemetry_win;
 static WINDOW* status_win;
-static SimulationState* display_simWorld_buffer;
+static SimulationState display_simWorld_buffer;
 
 /**
  * @brief 
@@ -101,7 +102,7 @@ static void destroy_display(){
  * \endmsc
  */
 static void fetch_display_data(){
-    get_buffer_snapshot(display_simWorld_buffer);
+    get_buffer_snapshot(&display_simWorld_buffer);
 } // fetch_display_data end
 
 /**
@@ -138,5 +139,26 @@ static void render_status(){
 } // render_status end
 
 void* display_thread(void* arg){ // thread function
+    init_display();
 
+    printf("[DISPLAY THREAD] AVAIL\n");
+
+    while (!atomic_load(&isSIGINT_signaled)){
+        fetch_display_data();
+
+        // render all windows in memory
+        render_radar();
+        render_telemetry();
+        render_status();
+
+        doupdate(); // output all rendered windows to terminal
+
+        usleep(DISPLAY_REFRESH_RATE_US);
+    } // while end
+
+    destroy_display();
+
+    printf("[DISPLAY THREAD] Shutdown Successful\n");
+
+    return NULL;
 } // display_thread end
