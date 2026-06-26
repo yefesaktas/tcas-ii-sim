@@ -19,10 +19,18 @@
 #include "types.h"
 #include "storage.h"
 
+/**
+ * @brief Period between display updates (microseconds).
+ *
+ * The display thread sleeps this long between each
+ * render cycle.
+ */
+#define DISPLAY_REFRESH_RATE_US 33000 // ~30 fps
+
 static WINDOW* radar_win;
 static WINDOW* telemetry_win;
 static WINDOW* status_win;
-static SimulationState* simWorld_buffer;
+static SimulationState* display_simWorld_buffer;
 
 /**
  * @brief 
@@ -59,7 +67,6 @@ static void init_display(){
     radar_win = newwin(LINES, radar_width, 0, 0);
     telemetry_win = newwin(LINES - status_height, right_width, 0, radar_width);
     status_win = newwin(status_height, right_width, LINES - status_height, radar_width);
-
 } // init_screen end
 
 /**
@@ -70,7 +77,20 @@ static void init_display(){
  * \endmsc
  */
 static void destroy_display(){
+    // deallocate window memories
+    if (radar_win != NULL){
+        delwin(radar_win);
+    } // if end
 
+    if (telemetry_win != NULL){
+        delwin(telemetry_win);
+    } // if end
+
+    if (status_win != NULL){
+        delwin(status_win);
+    } // if end
+
+    endwin(); // exit ncurses textual ui mode
 } // destroy_display end
 
 /**
@@ -81,7 +101,7 @@ static void destroy_display(){
  * \endmsc
  */
 static void fetch_display_data(){
-
+    get_buffer_snapshot(display_simWorld_buffer);
 } // fetch_display_data end
 
 /**
