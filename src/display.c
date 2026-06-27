@@ -15,10 +15,12 @@
 #include <unistd.h>
 #include <stdatomic.h>
 #include <stdio.h>
-#include <stdint.h>
+#include <math.h>
 
 #include "types.h"
 #include "storage.h"
+
+#define PI 3.14159265
 
 /**
  * @brief Period between display updates (microseconds).
@@ -36,9 +38,6 @@ static SimulationState display_simWorld_buffer;
 /**
  * @brief 
  *
- * \msc
- *
- * \endmsc
  */
 static void init_display(){
     setlocale(LC_ALL, "");
@@ -49,7 +48,7 @@ static void init_display(){
     curs_set(0); // hide flashing terminal cursor
 
     // initialize color support if terminal supports
-    if (has_colors()) {
+    if (has_colors()){
         start_color();
 
         // init_pair(pair_id, foreground_color, background_color)
@@ -57,7 +56,8 @@ static void init_display(){
         init_pair(2, COLOR_YELLOW, COLOR_BLACK); // for TA (Traffic Advisory)
         init_pair(3, COLOR_CYAN, COLOR_BLACK);   // for Proximate/Other Traffic
         init_pair(4, COLOR_GREEN, COLOR_BLACK);  // for Safe Status / Grid lines
-    } // if end
+        init_pair(5, COLOR_WHITE, COLOR_BLACK);  // background
+    }
 
     // width and height variables
     int radar_width = COLS * 0.7;           // 70% of display
@@ -68,28 +68,30 @@ static void init_display(){
     radar_win = newwin(LINES, radar_width, 0, 0);
     telemetry_win = newwin(LINES - status_height, right_width, 0, radar_width);
     status_win = newwin(status_height, right_width, LINES - status_height, radar_width);
+
+    // set window background colors
+    wbkgd(radar_win, COLOR_PAIR(5));
+    wbkgd(telemetry_win, COLOR_PAIR(5));
+    wbkgd(status_win, COLOR_PAIR(5));
 } // init_screen end
 
 /**
  * @brief 
  *
- * \msc
- *
- * \endmsc
  */
 static void destroy_display(){
     // deallocate window memories
     if (radar_win != NULL){
         delwin(radar_win);
-    } // if end
+    }
 
     if (telemetry_win != NULL){
         delwin(telemetry_win);
-    } // if end
+    }
 
     if (status_win != NULL){
         delwin(status_win);
-    } // if end
+    }
 
     endwin(); // exit ncurses textual ui mode
 } // destroy_display end
@@ -97,9 +99,6 @@ static void destroy_display(){
 /**
  * @brief 
  *
- * \msc
- *
- * \endmsc
  */
 static void fetch_display_data(){
     get_buffer_snapshot(&display_simWorld_buffer);
@@ -108,31 +107,250 @@ static void fetch_display_data(){
 /**
  * @brief 
  *
- * \msc
+ */
+static void draw_radar_background(int max_y, int max_x, int center_y, int center_x){
+    // draw range rings
+    int num_rings = 3;
+    int max_radius = (max_y / 2) - 2;
+    int ring_step = max_radius / num_rings;
+
+    wattron(radar_win, COLOR_PAIR(3)); // activate ring colors (cyan)
+
+    for (int r = ring_step; r <= max_radius; r += ring_step) {
+        // rotate 360 degrees around the ring with intervals of 10 degrees
+        for (int angle = 0; angle < 360; angle += 10) {
+            double rad = angle * (PI / 180.0); // deg to rad
+
+            // scale x-axis by 2 (to fit characters into terminal properly)
+            int y = (int)(r * sin(rad));
+            int x = (int)(r * 2.0 * cos(rad)); 
+
+            // perform window boundary check and print
+            if (center_y + y > 0 && center_y + y < max_y - 1 &&
+                center_x + x > 0 && center_x + x < max_x - 1) {
+                mvwaddch(radar_win, center_y + y, center_x + x, '.');
+            }
+        } // for end
+    } // for end
+
+    wattroff(radar_win, COLOR_PAIR(3)); // deactivate ring colors
+
+    // draw host aircraft on center in green
+    wattron(radar_win, COLOR_PAIR(4));
+    mvwaddch(radar_win, center_y, center_x, '^');
+    wattroff(radar_win, COLOR_PAIR(4));
+
+    box(radar_win, 0, 0); // draw window border
+    mvwprintw(radar_win, 0, 2, " TCAS NAVIGATION DISPLAY "); // add window header
+} // draw_radar_background end
+
+/**
+ * @brief Convert raw host/intruder positions into radar screen offsets.
  *
- * \endmsc
+ * @details Computes the intruder position relative to the host aircraft and
+ * scales it into radar-character offsets suitable for drawing on the ncurses
+ * radar window.
+ *
+ * @param host_state Current ownship state.
+ * @param intruder_state Current intruder state.
+ * @param max_y Radar window height.
+ * @param max_x Radar window width.
+ * @param offset_y Output row offset from the radar center (center_y).
+ * @param offset_x Output column offset from the radar center (center_x).
+ */
+static void compute_intruder_screen_offset(const AircraftState* host_state, const AircraftState* intruder_state, int max_y, int max_x, int* offset_y, int* offset_x){
+    double relative_x = intruder_state->x - host_state->x;
+    double relative_y = intruder_state->y - host_state->y;
+
+    int max_radius = (max_y / 2) - 2;
+
+    /* maximum radar range: 30 nautical miles -> meters (1 NM = 1852 m) */
+    double max_range = 30.0 * 1852.0; // = 55560 meters 
+    double range_scale = (double)max_radius / max_range;
+
+    int scaled_y = (int)lround(relative_y * range_scale);
+    int scaled_x = (int)lround(relative_x * range_scale * 2.0);
+
+    if (scaled_y > max_radius){
+        scaled_y = max_radius;
+    } 
+    
+    else if (scaled_y < -max_radius){
+        scaled_y = -max_radius;
+    }
+
+    if (scaled_x > (max_x / 2) - 2){
+        scaled_x = (max_x / 2) - 2;
+    } 
+    
+    else if (scaled_x < -((max_x / 2) - 2)){
+        scaled_x = -((max_x / 2) - 2);
+    }
+
+    *offset_y = -scaled_y;
+    *offset_x = scaled_x;
+} // compute_intruder_screen_offset end
+
+/**
+ * @brief 
+ *
+ */
+static void draw_intruders(int max_y, int max_x, int center_y, int center_x){
+    // iterate tracked intruders and draw each active one
+    for (int i = 0; i < MAX_TRACK; ++i){
+        const IntruderShip* intr = &display_simWorld_buffer.intruders[i];
+
+        if (!intr->isActive){
+            continue;
+        } 
+ 
+        int off_y = 0, off_x = 0;
+        compute_intruder_screen_offset(&display_simWorld_buffer.host_aircraft.state, &intr->state, max_y, max_x, &off_y, &off_x);
+
+        int draw_y = center_y + off_y;
+        int draw_x = center_x + off_x;
+
+        if (draw_y <= 0 || draw_y >= max_y - 1 || draw_x <= 0 || draw_x >= max_x - 1){
+            continue; // out of drawable area
+        } 
+
+        // choose symbol and color by threat level
+        char ch = 'o';
+        int color_pair = 3; // default: proximate/other (cyan)
+
+        switch (intr->threat_level){
+            case THREAT_RA: // resolution advisory
+                ch = 'R';
+                color_pair = 1; // red
+                break;
+
+            case THREAT_TA: // traffic advisory
+                ch = 'T';
+                color_pair = 2; // yellow
+                break;
+
+            default:
+                break; // keep defaults
+        } // switch-case end
+
+        wattron(radar_win, COLOR_PAIR(color_pair));
+        mvwaddch(radar_win, draw_y, draw_x, ch);
+        wattroff(radar_win, COLOR_PAIR(color_pair));
+    } // for end
+} // draw_intruders end
+
+/**
+ * @brief 
+ *
  */
 static void render_radar(){
+    werase(radar_win); // erase previous window frame
 
+    int max_y, max_x;
+    wgetmaxyx(radar_win, max_y, max_x); // fetch radar window height (max_y) and width (max_x)
+
+    // calculate center coordinates for host aircraft
+    int center_y = max_y / 2;
+    int center_x = max_x / 2;
+
+    draw_radar_background(max_y, max_x, center_y, center_x);
+    draw_intruders(max_y, max_x, center_y, center_x);
+
+    wnoutrefresh(radar_win); // queue window changes in memory
 } // render_radar end
 
 /**
  * @brief 
  *
- * \msc
- *
- * \endmsc
  */
 static void render_telemetry(){
+    werase(telemetry_win); // erase previous window frame
 
+    int max_y, max_x;
+    wgetmaxyx(telemetry_win, max_y, max_x); // fetch telemetry window height (max_y) and width (max_x)
+
+    box(telemetry_win, 0, 0); // draw window border
+    mvwprintw(telemetry_win, 0, 2, " TELEMETRY & TRACKING "); // add window header
+
+    // host aircraft telemetry data
+    const AircraftState* host = &display_simWorld_buffer.host_aircraft.state;
+
+    wattron(telemetry_win, A_BOLD | COLOR_PAIR(4)); // bold and green
+    mvwprintw(telemetry_win, 2, 2, "OWN AIRCRAFT (HOST)");
+    wattroff(telemetry_win, A_BOLD | COLOR_PAIR(4));
+
+    // add altitude and position data (add mode_s in future)
+    double host_alt_ft = host->z * 3.28084; // meter to feet conversion
+
+    mvwprintw(telemetry_win, 4, 2, "ALTITUDE : %.0f ft", host_alt_ft);
+    mvwprintw(telemetry_win, 5, 2, "POSITION : X: %.0f, Y: %.0f", host->x, host->y);
+
+    // add visual seperation line
+    mvwhline(telemetry_win, 7, 1, '-', max_x - 2);
+
+    // intruder aircrafts telemetry data
+    wattron(telemetry_win, A_BOLD);
+    mvwprintw(telemetry_win, 8, 2, "ACTIVE TRACKS");
+    wattroff(telemetry_win, A_BOLD);
+
+    int print_line = 10; // starting row for intruder telemetry data
+
+    for (int i = 0; i < MAX_TRACK; ++i){
+        const IntruderShip* intr = &display_simWorld_buffer.intruders[i];
+
+        if (!intr->isActive){
+            continue;
+        } 
+
+        // hide intruder aircraft entries that overflow from telemetry window
+        // TODO: Handle telemetry pagination. Currently hides tracks that exceed window height.
+        if (print_line >= max_y - 2){
+            mvwprintw(telemetry_win, print_line, 2, "... (More tracks hidden)");
+            break;
+        } 
+
+        double dx = intr->state.x - host->x;
+        double dy = intr->state.y - host->y;
+        double distance_m = sqrt((dx * dx) + (dy * dy)); // calculate slant distance
+        double distance_nm = distance_m / 1852.0; // meter to nautical mile (nm) conversion
+
+        // relative to host aircraft altitude 
+        double rel_alt_m = intr->state.z - host->z;
+        double rel_alt_ft = rel_alt_m * 3.28084; // meter to feet conversion
+
+        // choose label and color by threat level
+        char* threat_str = "PROX";
+        int color_pair = 3; // default: proximate/other (cyan)
+
+        switch (intr->threat_level){
+            case THREAT_RA: // resolution advisory
+                threat_str = " RA ";
+                color_pair = 1; // red
+                break;
+
+            case THREAT_TA: // traffic advisory
+                threat_str = " TA ";
+                color_pair = 2; // yellow
+                break;
+
+            default:
+                break; // keep defaults
+        } // switch-case end
+
+        // format: TRK ID | THREAT | DISTANCE | RELATIVE ALTITUDE (add mode_s in future)
+        wattron(telemetry_win, COLOR_PAIR(color_pair));
+        mvwprintw(telemetry_win, print_line, 2, "TRK %02d | %s | %4.1f NM | %+5.0f ft", i, threat_str, distance_nm, rel_alt_ft);
+        wattroff(telemetry_win, COLOR_PAIR(color_pair));
+
+        print_line += 2; // add 1 line interval between entries
+    } // for end
+
+    wnoutrefresh(telemetry_win); // queue window changes in memory
 } // render_telemetry end
 
 /**
  * @brief 
  *
- * \msc
- *
- * \endmsc
  */
 static void render_status(){
 
@@ -140,9 +358,7 @@ static void render_status(){
 
 void* display_thread(void* arg){ // thread function
     init_display();
-
-    printf("[DISPLAY THREAD] AVAIL\n");
-
+    
     while (!atomic_load(&isSIGINT_signaled)){
         fetch_display_data();
 
@@ -151,7 +367,7 @@ void* display_thread(void* arg){ // thread function
         render_telemetry();
         render_status();
 
-        doupdate(); // output all rendered windows to terminal
+        doupdate(); // output all rendered windows to terminal (to prevent flickering)
 
         usleep(DISPLAY_REFRESH_RATE_US);
     } // while end
