@@ -58,3 +58,5 @@ dkms.conf
 # doxygen outputs
 docs/html/
 docs/latex/
+
+.vscode/

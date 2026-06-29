@@ -21,7 +21,7 @@
  *
  * @details This thread simulates periodic transponder broadcasts for the host
  * and intruder aircrafts, updating the shared simulation buffer via the
- * `storage` API until `isSIGINT_signaled` becomes true.
+ * `storage` API until `isShutdownSignaled` becomes true.
  *
  * @param arg Optional thread argument (unused, may be NULL).
  * @return void* Always returns NULL when the thread exits normally.

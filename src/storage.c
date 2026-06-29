@@ -18,7 +18,7 @@
 
 #include "types.h"
 
-volatile atomic_bool isSIGINT_signaled = ATOMIC_VAR_INIT(false);
+volatile atomic_bool isShutdownSignaled = ATOMIC_VAR_INIT(false);
 static SimulationState simWorld; // prevent access from outside with extern keyword by using static keyword
 
 void init_buffer(void){

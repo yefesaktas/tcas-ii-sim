@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -pthread -g -fsanitize=thread -I./include # ThreadSanitizer is active, deactivate before production
+CFLAGS = -Wall -pthread -g -fsanitize=thread -I./include -D_POSIX_C_SOURCE=200809L # ThreadSanitizer is active, deactivate before production
 
 LDFLAGS = -lm -lncursesw
 

@@ -116,7 +116,7 @@ void* transponder_data_thread(void* arg){ // thread function
 
     printf("[TRANSPONDER THREAD] AVAIL\n");
 
-    while (!atomic_load(&isSIGINT_signaled)){
+    while (!atomic_load(&isShutdownSignaled)){
         update_physics();
 
         set_OwnShip_state(&host_state, host_ModeS);

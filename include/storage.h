@@ -28,7 +28,7 @@
  * This atomic boolean is used by threads to cooperatively detect a
  * shutdown request and exit cleanly.
  */
-extern volatile atomic_bool isSIGINT_signaled;
+extern volatile atomic_bool isShutdownSignaled;
 
 // function prototypes
 

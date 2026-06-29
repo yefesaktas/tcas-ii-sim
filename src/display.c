@@ -396,7 +396,7 @@ static void render_status(){
 void* display_thread(void* arg){ // thread function
     init_display();
     
-    while (!atomic_load(&isSIGINT_signaled)){
+    while (!atomic_load(&isShutdownSignaled)){
         fetch_display_data();
 
         // render all windows in memory
