@@ -36,8 +36,7 @@ static WINDOW* status_win;
 static SimulationState display_simWorld_buffer;
 
 /**
- * @brief 
- *
+ * @brief Initialize ncurses display with windows and color pairs.
  */
 static void init_display(){
     setlocale(LC_ALL, "");
@@ -76,8 +75,7 @@ static void init_display(){
 } // init_screen end
 
 /**
- * @brief 
- *
+ * @brief Clean up and finalize ncurses display resources.
  */
 static void destroy_display(){
     // deallocate window memories
@@ -97,16 +95,19 @@ static void destroy_display(){
 } // destroy_display end
 
 /**
- * @brief 
- *
+ * @brief Fetch current simulation state from shared buffer.
  */
 static void fetch_display_data(){
     get_buffer_snapshot(&display_simWorld_buffer);
 } // fetch_display_data end
 
 /**
- * @brief 
+ * @brief Draw radar rings, center marker, and window border.
  *
+ * @param max_y Radar window height.
+ * @param max_x Radar window width.
+ * @param center_y Y coordinate of the radar center.
+ * @param center_x X coordinate of the radar center.
  */
 static void draw_radar_background(int max_y, int max_x, int center_y, int center_x){
     // draw range rings
@@ -192,8 +193,12 @@ static void compute_intruder_screen_offset(const AircraftState* host_state, cons
 } // compute_intruder_screen_offset end
 
 /**
- * @brief 
+ * @brief Draw active intruder aircraft symbols on radar display.
  *
+ * @param max_y Radar window height.
+ * @param max_x Radar window width.
+ * @param center_y Y coordinate of the radar center.
+ * @param center_x X coordinate of the radar center.
  */
 static void draw_intruders(int max_y, int max_x, int center_y, int center_x){
     // iterate tracked intruders and draw each active one
@@ -240,8 +245,7 @@ static void draw_intruders(int max_y, int max_x, int center_y, int center_x){
 } // draw_intruders end
 
 /**
- * @brief 
- *
+ * @brief Render complete radar display with background and intruders.
  */
 static void render_radar(){
     werase(radar_win); // erase previous window frame
@@ -260,8 +264,7 @@ static void render_radar(){
 } // render_radar end
 
 /**
- * @brief 
- *
+ * @brief Render telemetry and active track information panel.
  */
 static void render_telemetry(){
     werase(telemetry_win); // erase previous window frame
@@ -349,8 +352,7 @@ static void render_telemetry(){
 } // render_telemetry end
 
 /**
- * @brief 
- *
+ * @brief Render system status and control information.
  */
 static void render_status(){
     werase(status_win); // erase previous window frame
