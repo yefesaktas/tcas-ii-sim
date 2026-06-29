@@ -353,7 +353,42 @@ static void render_telemetry(){
  *
  */
 static void render_status(){
+    werase(status_win); // erase previous window frame
 
+    int max_y, max_x;
+    wgetmaxyx(status_win, max_y, max_x); // fetch status window height (max_y) and width (max_x)
+
+    box(status_win, 0, 0); // draw window border
+
+    // draw current TCAS mode
+    // TODO: TCAS mode will be changeable in future
+    wattron(status_win, COLOR_PAIR(4) | A_BOLD); // green and bold
+    mvwprintw(status_win, 1, 2, "MODE: TA/RA");
+    wattroff(status_win, COLOR_PAIR(4) | A_BOLD);
+
+    // draw current range
+    // TODO: TCAS range will be changeable in future
+    mvwprintw(status_win, 1, 16, "RNG: 30 NM");
+
+    // draw number of intruder aircrafts
+    int active_count = 0;
+    for (int i = 0; i < MAX_TRACK; ++i) {
+        if (display_simWorld_buffer.intruders[i].isActive) {
+            active_count++;
+        }
+    }
+    
+    // center the text
+    char track_msg[50];
+    sprintf(track_msg, "ACTIVE TRACKS: %d / %d", active_count, MAX_TRACK);
+    mvwprintw(status_win, 1, (max_x / 2) - 10, "%s", track_msg);
+
+    // draw system status
+    mvwprintw(status_win, 1, max_x - 30, "SYS: OK");
+
+    mvwprintw(status_win, 1, max_x - 18, "CTRL+C to Exit");
+
+    wnoutrefresh(status_win); // queue window changes in memory
 } // render_status end
 
 void* display_thread(void* arg){ // thread function
