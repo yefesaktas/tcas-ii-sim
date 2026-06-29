@@ -9,7 +9,6 @@
 
 #include <signal.h>
 #include <pthread.h>
-#include <stdatomic.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,7 +20,7 @@
 
 // SIGINT and SIGTERM signal handler
 void SIGINT_SIGTERM_handlerRoutine(int sig){
-    atomic_store(&isShutdownSignaled, true); // atomic functions are async-signal-safe
+    isShutdownSignaled = 1; // async-signal-safe
 } // SIGINT_SIGTERM_handlerRoutine end
 
 int main(void){
@@ -70,7 +69,7 @@ int main(void){
     */
 
     // wait until a shutdown is requested
-    while (!atomic_load(&isShutdownSignaled)){
+    while (!isShutdownSignaled){
         usleep(100000); // 100 ms 
     }
 

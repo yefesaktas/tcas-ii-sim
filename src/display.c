@@ -13,7 +13,6 @@
 #include <ncurses.h>
 #include <locale.h>
 #include <unistd.h>
-#include <stdatomic.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -396,7 +395,7 @@ static void render_status(){
 void* display_thread(void* arg){ // thread function
     init_display();
     
-    while (!atomic_load(&isShutdownSignaled)){
+    while (!isShutdownSignaled){
         fetch_display_data();
 
         // render all windows in memory

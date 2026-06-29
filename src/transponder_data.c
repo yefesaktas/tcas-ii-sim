@@ -11,7 +11,6 @@
 #include "transponder_data.h"
 
 #include <unistd.h>
-#include <stdatomic.h>
 #include <stdio.h>
 #include <stdint.h>
 
@@ -116,7 +115,7 @@ void* transponder_data_thread(void* arg){ // thread function
 
     printf("[TRANSPONDER THREAD] AVAIL\n");
 
-    while (!atomic_load(&isShutdownSignaled)){
+    while (!isShutdownSignaled){
         update_physics();
 
         set_OwnShip_state(&host_state, host_ModeS);

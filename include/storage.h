@@ -18,17 +18,17 @@
 #define STORAGE_H
 
 #include <stdint.h>
-#include <stdatomic.h>
+#include <signal.h>
 
 #include "types.h"
 
 /**
  * @brief Flag set when a SIGINT (Ctrl+C) has been observed.
  *
- * This atomic boolean is used by threads to cooperatively detect a
+ * This signal-safe atomic flag is used by threads to cooperatively detect a
  * shutdown request and exit cleanly.
  */
-extern volatile atomic_bool isShutdownSignaled;
+extern volatile sig_atomic_t isShutdownSignaled;
 
 // function prototypes
 

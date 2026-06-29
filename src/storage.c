@@ -11,14 +11,13 @@
 #include "storage.h"
 
 #include <string.h>
-#include <stdatomic.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
 
 #include "types.h"
 
-volatile atomic_bool isShutdownSignaled = ATOMIC_VAR_INIT(false);
+volatile sig_atomic_t isShutdownSignaled = 0;
 static SimulationState simWorld; // prevent access from outside with extern keyword by using static keyword
 
 void init_buffer(void){
