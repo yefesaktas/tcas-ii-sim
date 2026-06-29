@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -20,7 +21,11 @@
 
 // SIGINT and SIGTERM signal handler
 void SIGINT_SIGTERM_handlerRoutine(int sig){
+    int saved_errno = errno; // save current system error context
+
     isShutdownSignaled = 1; // async-signal-safe
+
+    errno = saved_errno; // reload current system error context
 } // SIGINT_SIGTERM_handlerRoutine end
 
 int main(void){
