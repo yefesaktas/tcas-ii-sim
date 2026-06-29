@@ -250,7 +250,7 @@ static void render_radar(){
     werase(radar_win); // erase previous window frame
 
     int max_y, max_x;
-    wgetmaxyx(radar_win, max_y, max_x); // fetch radar window height (max_y) and width (max_x)
+    getmaxyx(radar_win, max_y, max_x); // fetch radar window height (max_y) and width (max_x)
 
     // calculate center coordinates for host aircraft
     int center_y = max_y / 2;
@@ -269,7 +269,7 @@ static void render_telemetry(){
     werase(telemetry_win); // erase previous window frame
 
     int max_y, max_x;
-    wgetmaxyx(telemetry_win, max_y, max_x); // fetch telemetry window height (max_y) and width (max_x)
+    getmaxyx(telemetry_win, max_y, max_x); // fetch telemetry window height (max_y) and width (max_x)
 
     box(telemetry_win, 0, 0); // draw window border
     mvwprintw(telemetry_win, 0, 2, " TELEMETRY & TRACKING "); // add window header
@@ -356,8 +356,7 @@ static void render_telemetry(){
 static void render_status(){
     werase(status_win); // erase previous window frame
 
-    int max_y, max_x;
-    wgetmaxyx(status_win, max_y, max_x); // fetch status window height (max_y) and width (max_x)
+    int max_x = getmaxx(status_win); // fetch status window width (max_x)
 
     box(status_win, 0, 0); // draw window border
 
@@ -369,7 +368,7 @@ static void render_status(){
 
     // draw current range
     // TODO: TCAS range will be changeable in future
-    mvwprintw(status_win, 1, 16, "RNG: 30 NM");
+    mvwprintw(status_win, 1, 15, "RNG: 30 NM");
 
     // draw number of intruder aircrafts
     int active_count = 0;
@@ -382,12 +381,12 @@ static void render_status(){
     // center the text
     char track_msg[50];
     sprintf(track_msg, "ACTIVE TRACKS: %d / %d", active_count, MAX_TRACK);
-    mvwprintw(status_win, 1, (max_x / 2) - 10, "%s", track_msg);
+    mvwprintw(status_win, 1, 26, "%s", track_msg);
 
     // draw system status
-    mvwprintw(status_win, 1, max_x - 30, "SYS: OK");
+    mvwprintw(status_win, 1, max_x - 22, "SYS: OK");
 
-    mvwprintw(status_win, 1, max_x - 18, "CTRL+C to Exit");
+    mvwprintw(status_win, 1, max_x - 15, "CTRL+C to Exit");
 
     wnoutrefresh(status_win); // queue window changes in memory
 } // render_status end
