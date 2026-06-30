@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 #include "types.h"
 #include "storage.h"
@@ -60,7 +61,7 @@ static void init_display(){
     // width and height variables
     int radar_width = COLS * 0.7;           // 70% of display
     int right_width = COLS - radar_width;   // remaining 30%
-    int status_height = 3;                  // 3 lines for status window height
+    int status_height = 6;                  // 3 lines for status window height
 
     // create display sections (windows) in memory
     radar_win = newwin(LINES, radar_width, 0, 0);
@@ -365,6 +366,28 @@ static void render_telemetry(){
  * @brief Render system status and control information.
  */
 static void render_status(){
+    // calculate render time and jitter
+    static struct timespec last_time = {0};
+    struct timespec current_time;
+
+    clock_gettime(CLOCK_MONOTONIC, &current_time); // read current time
+
+    if (last_time.tv_sec == 0){
+        last_time = current_time;
+    }
+
+    // calculate elapsed time in milliseconds
+    double elapsed_ms = (current_time.tv_sec - last_time.tv_sec) * 1000.0 + 
+                        (current_time.tv_nsec - last_time.tv_nsec) / 1000000.0;
+    
+    // target ms : DISPLAY_REFRESH_RATE_US / 1000.0 (33.0 ms)
+    double target_ms = DISPLAY_REFRESH_RATE_US / 1000.0;
+    double jitter = elapsed_ms - target_ms; 
+
+    // ncurses render operations
+    // Bir sonraki frame için zamanı kaydet
+    last_time = current_time;
+
     werase(status_win); // erase previous window frame
 
     int max_x = getmaxx(status_win); // fetch status window width (max_x)
@@ -380,13 +403,15 @@ static void render_status(){
     // draw current range
     // TODO: TCAS range will be changeable in future
     wattron(status_win, COLOR_PAIR(3) | A_BOLD); // cyan and bold
-    mvwprintw(status_win, 1, 15, "RNG: 30 NM");
+    mvwprintw(status_win, 1, 14, "RNG: 30 NM");
     wattroff(status_win, COLOR_PAIR(3) | A_BOLD);
 
     // draw system status
-    mvwprintw(status_win, 1, 26, "SYS: OK");
+    mvwprintw(status_win, 1, 25, "SYS: OK");
 
-    mvwprintw(status_win, 1, max_x - 15, "CTRL+C to Exit");
+    mvwprintw(status_win, 1, max_x - 16, "CTRL+C to Exit");
+
+    mvwprintw(status_win, 2, 2, "Frame Time: %5.2f ms | Jitter: %+6.2f ms", elapsed_ms, jitter);
 
     wnoutrefresh(status_win); // queue window changes in memory
 } // render_status end
