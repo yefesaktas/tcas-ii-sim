@@ -54,7 +54,7 @@ int main(void){
     // pthread_t tcas_logic_tid;
 
     // start threads
-    printf("[MAIN THREAD] Initializing system threads..");
+    printf("[MAIN THREAD] Initializing system threads..\n");
 
     if (pthread_create(&disp_tid, NULL, display_thread, NULL) != 0) {
         perror("[MAIN THREAD] Failed to create display thread");

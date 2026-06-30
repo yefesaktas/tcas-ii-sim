@@ -219,7 +219,7 @@ static void draw_intruders(int max_y, int max_x, int center_y, int center_x){
         } 
 
         // choose symbol and color by threat level
-        char ch = 'o';
+        char ch = 'O';
         int color_pair = 3; // default: proximate/other (cyan)
 
         switch (intr->threat_level){
@@ -291,8 +291,19 @@ static void render_telemetry(){
     mvwhline(telemetry_win, 7, 1, '-', max_x - 2);
 
     // intruder aircrafts telemetry data
+    // calculate number of intruder aircrafts
+    int active_count = 0;
+    for (int i = 0; i < MAX_TRACK; ++i) {
+        if (display_simWorld_buffer.intruders[i].isActive) {
+            active_count++;
+        }
+    }
+
+    char track_msg[50];
+    sprintf(track_msg, "ACTIVE TRACKS: %d / %d", active_count, MAX_TRACK);
+
     wattron(telemetry_win, A_BOLD);
-    mvwprintw(telemetry_win, 8, 2, "ACTIVE TRACKS");
+    mvwprintw(telemetry_win, 8, 2, "%s", track_msg);
     wattroff(telemetry_win, A_BOLD);
 
     int print_line = 10; // starting row for intruder telemetry data
@@ -368,23 +379,12 @@ static void render_status(){
 
     // draw current range
     // TODO: TCAS range will be changeable in future
+    wattron(status_win, COLOR_PAIR(3) | A_BOLD); // cyan and bold
     mvwprintw(status_win, 1, 15, "RNG: 30 NM");
-
-    // draw number of intruder aircrafts
-    int active_count = 0;
-    for (int i = 0; i < MAX_TRACK; ++i) {
-        if (display_simWorld_buffer.intruders[i].isActive) {
-            active_count++;
-        }
-    }
-    
-    // center the text
-    char track_msg[50];
-    sprintf(track_msg, "ACTIVE TRACKS: %d / %d", active_count, MAX_TRACK);
-    mvwprintw(status_win, 1, 26, "%s", track_msg);
+    wattroff(status_win, COLOR_PAIR(3) | A_BOLD);
 
     // draw system status
-    mvwprintw(status_win, 1, max_x - 22, "SYS: OK");
+    mvwprintw(status_win, 1, 26, "SYS: OK");
 
     mvwprintw(status_win, 1, max_x - 15, "CTRL+C to Exit");
 
