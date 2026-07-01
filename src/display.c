@@ -370,7 +370,7 @@ static void render_status(){
     static struct timespec last_time = {0};
     struct timespec current_time;
 
-    clock_gettime(CLOCK_MONOTONIC, &current_time); // read current time
+    clock_gettime(CLOCK_MONOTONIC, &current_time);
 
     if (last_time.tv_sec == 0){
         last_time = current_time;
@@ -418,8 +418,12 @@ static void render_status(){
 
 void* display_thread(void* arg){ // thread function
     init_display();
+
+    struct timespec start_time, end_time; // used for dynamic sleep
     
     while (!isShutdownSignaled){
+        clock_gettime(CLOCK_MONOTONIC, &start_time);
+
         fetch_display_data();
 
         // render all windows in memory
@@ -429,7 +433,19 @@ void* display_thread(void* arg){ // thread function
 
         doupdate(); // output all rendered windows to terminal (to prevent flickering)
 
-        usleep(DISPLAY_REFRESH_RATE_US);
+        clock_gettime(CLOCK_MONOTONIC, &end_time);
+
+        // calculate render duration for the frame in microseconds
+        long work_time_us = (end_time.tv_sec - start_time.tv_sec) * 1000000L + 
+                            (end_time.tv_nsec - start_time.tv_nsec) / 1000L;
+
+        // calculate remaining sleep time in microseconds
+        long sleep_time_us = DISPLAY_REFRESH_RATE_US - work_time_us;
+
+        // sleep if needed
+        if (sleep_time_us > 0){
+            usleep(sleep_time_us);
+        }
     } // while end
 
     destroy_display();
