@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <time.h>
 
 #include "types.h"
 #include "storage.h"
@@ -24,11 +25,6 @@
  * broadcast/update cycle.
  */
 #define UPDATE_PERIOD_US 500000
-
-/**
- * @brief Simulation timestep in seconds used to advance simple physics.
- */
-#define DELTA_TIME 0.5
 
 /**
  * @brief Number of intruder aircraft simulated.
@@ -85,10 +81,14 @@ static void init_scenerio(){
     intruder_state[0].vz = 0;
 } // init_scenerio end
 
+// stores the last calculation time of the physics loop
+static struct timespec last_physics_time = {0};
+
 /**
  * @brief Advance the simulated aircraft states by one timestep.
  *
- * Applies a simple constant-velocity integration using `DELTA_TIME`.
+ * Applies a simple constant-velocity integration using a dynamically 
+ * calculated delta time (real-time elapsed since the last update).
  *
  * \msc
  * TransponderThread, Physics;
@@ -97,17 +97,32 @@ static void init_scenerio(){
  * \endmsc
  */
 static void update_physics(){
-    // update host aircraft data
-    host_state.x += host_state.vx * DELTA_TIME;
-    host_state.y += host_state.vy * DELTA_TIME;
-    host_state.z += host_state.vz * DELTA_TIME;
+    struct timespec current_time;
+    clock_gettime(CLOCK_MONOTONIC, &current_time);
 
-    // update intruder aircrafts data
+    // if first run, save time and return
+    if (last_physics_time.tv_sec == 0 && last_physics_time.tv_nsec == 0) {
+        last_physics_time = current_time;
+        return; 
+    }
+
+    // skip the first run to establish a baseline time
+    double delta_t = (current_time.tv_sec - last_physics_time.tv_sec) + 
+                     (current_time.tv_nsec - last_physics_time.tv_nsec) / 1e9;
+
+    last_physics_time = current_time;
+
+    // update host aircraft
+    host_state.x += host_state.vx * delta_t;
+    host_state.y += host_state.vy * delta_t;
+    host_state.z += host_state.vz * delta_t;
+
+    // update intruder aircrafts
     for (int i = 0; i < INTRUDERS_NUM; i++){
-        intruder_state[i].x += intruder_state[i].vx * DELTA_TIME;
-        intruder_state[i].y += intruder_state[i].vy * DELTA_TIME;
-        intruder_state[i].z += intruder_state[i].vz * DELTA_TIME;
-    } // for end
+        intruder_state[i].x += intruder_state[i].vx * delta_t;
+        intruder_state[i].y += intruder_state[i].vy * delta_t;
+        intruder_state[i].z += intruder_state[i].vz * delta_t;
+    }
 } // update_physics end
 
 void* transponder_data_thread(void* arg){ // thread function
