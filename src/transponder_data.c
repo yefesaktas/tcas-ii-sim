@@ -130,14 +130,30 @@ void* transponder_data_thread(void* arg){ // thread function
 
     printf("[TRANSPONDER THREAD] AVAIL\n");
 
+    struct timespec start_time, end_time; // used for dynamic sleep
+
     while (!isShutdownSignaled){
+        clock_gettime(CLOCK_MONOTONIC, &start_time);
+
         update_physics();
 
         set_SimWorld_state(&host_state, host_ModeS,
                             intruder_state, intruder_ModeS,
                             INTRUDERS_NUM);
 
-        usleep(UPDATE_PERIOD_US); // sleep 0.5 second
+        clock_gettime(CLOCK_MONOTONIC, &end_time);
+
+        // calculate duration of operations in microseconds
+        long work_time_us = (end_time.tv_sec - start_time.tv_sec) * 1000000L + 
+                            (end_time.tv_nsec - start_time.tv_nsec) / 1000L;
+
+        // calculate remaining sleep time in microseconds
+        long sleep_time_us = UPDATE_PERIOD_US - work_time_us;
+
+        // sleep if needed
+        if (sleep_time_us > 0){
+            usleep(sleep_time_us);
+        }
     } // while end
 
     printf("[TRANSPONDER THREAD] Shutdown Successful\n");
