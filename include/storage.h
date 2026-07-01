@@ -58,37 +58,19 @@ void init_buffer(void);
 void finalize_buffer(void);
 
 /**
- * @brief Update the stored ownship state.
+ * @brief 
  *
- * @details Copies the provided `state` and `mode_s_code` into the global
- * simulation buffer in a thread-safe manner.
- *
- * @param state Pointer to the new `AircraftState` for the ownship.
- * @param mode_s_code Mode-S identifier associated with the ownship.
+ * @details 
+ * 
+ * @param
  *
  * \msc
- * Transponder, Storage;
- * Transponder->Storage [label="set_OwnShip_state(state, mode_s_code)"];
+ * 
  * \endmsc
  */
-void set_OwnShip_state(const AircraftState* state, uint32_t mode_s_code);
-
-/**
- * @brief Update an intruder's kinematic state and identifier.
- *
- * @details Marks the intruder slot at `index` as active and updates its state.
- * The function is thread-safe with respect to the shared simulation buffer.
- *
- * @param index Index into the intruder array (0..MAX_TRACK-1).
- * @param state Pointer to the new `AircraftState` for the intruder.
- * @param mode_s_code Mode-S identifier for the intruder aircraft.
- *
- * \msc
- * Transponder, Storage;
- * Transponder->Storage [label="set_IntruderShip_state(index, state, mode_s_code)"];
- * \endmsc
- */
-void set_IntruderShip_state(int index, const AircraftState* state, uint32_t mode_s_code);
+void set_SimWorld_state(const AircraftState* host_state, uint32_t host_mode_s_code,
+                        const AircraftState* intruders_state, const uint32_t* intruders_mode_s,
+                        int num_intruders);
 
 /**
  * @brief Store computed relative metrics for an intruder track.

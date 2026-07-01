@@ -100,13 +100,13 @@ static void update_physics(){
     struct timespec current_time;
     clock_gettime(CLOCK_MONOTONIC, &current_time);
 
-    // if first run, save time and return
+    // skip the first run to establish a baseline time
     if (last_physics_time.tv_sec == 0 && last_physics_time.tv_nsec == 0) {
         last_physics_time = current_time;
         return; 
     }
 
-    // skip the first run to establish a baseline time
+    // calculate dynamic delta_t in seconds
     double delta_t = (current_time.tv_sec - last_physics_time.tv_sec) + 
                      (current_time.tv_nsec - last_physics_time.tv_nsec) / 1e9;
 
@@ -133,11 +133,9 @@ void* transponder_data_thread(void* arg){ // thread function
     while (!isShutdownSignaled){
         update_physics();
 
-        set_OwnShip_state(&host_state, host_ModeS);
-
-        for (int i = 0; i < INTRUDERS_NUM; i++){
-            set_IntruderShip_state(i, &intruder_state[i], intruder_ModeS[i]);
-        } // for end
+        set_SimWorld_state(&host_state, host_ModeS,
+                            intruder_state, intruder_ModeS,
+                            INTRUDERS_NUM);
 
         usleep(UPDATE_PERIOD_US); // sleep 0.5 second
     } // while end

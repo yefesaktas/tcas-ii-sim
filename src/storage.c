@@ -30,24 +30,25 @@ void finalize_buffer(void){
     pthread_mutex_destroy(&(simWorld.state_access_lock)); // destroy shared buffer lock
 } // finalize_buffer end
 
-void set_OwnShip_state(const AircraftState* state, uint32_t mode_s_code){ // transponder_data thread will call
+void set_SimWorld_state(const AircraftState* host_state, uint32_t host_mode_s_code,
+                        const AircraftState* intruders_state, const uint32_t* intruders_mode_s,
+                        int num_intruders){
+
     pthread_mutex_lock(&(simWorld.state_access_lock));
 
-    memcpy(&(simWorld.host_aircraft.state), state, sizeof(simWorld.host_aircraft.state)); // set aircraft state
-    simWorld.host_aircraft.mode_s_code = mode_s_code; // set mode-S code
+    // update ownship state
+    memcpy(&(simWorld.host_aircraft.state), host_state, sizeof(simWorld.host_aircraft.state));
+    simWorld.host_aircraft.mode_s_code = host_mode_s_code;
+
+    // update intruder states
+    for (int i = 0; i < num_intruders; i++){
+        memcpy(&(simWorld.intruders[i].state), &intruders_state[i], sizeof(simWorld.intruders[i].state));
+        simWorld.intruders[i].mode_s_code = intruders_mode_s[i]; // set mode-S code
+        simWorld.intruders[i].isActive = true;
+    }
 
     pthread_mutex_unlock(&(simWorld.state_access_lock));
-} // set_OwnShip_state end
-
-void set_IntruderShip_state(int index, const AircraftState* state, uint32_t mode_s_code){ // transponder_data thread will call
-    pthread_mutex_lock(&(simWorld.state_access_lock));
-
-    memcpy(&(simWorld.intruders[index].state), state, sizeof(simWorld.intruders[index].state)); // set aircraft state
-    simWorld.intruders[index].mode_s_code = mode_s_code; // set mode-S code
-    simWorld.intruders[index].isActive = true;
-
-    pthread_mutex_unlock(&(simWorld.state_access_lock));
-} // set_IntruderShip_state end
+} // set_SimWorld_state
 
 void update_intruder_data(int index, double relative_altitude, double distance, double bearing, double closure_rate, double time_to_impact, uint8_t threat_level){ // tcas_logic thread will call
     pthread_mutex_lock(&(simWorld.state_access_lock));
