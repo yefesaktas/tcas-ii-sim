@@ -59,7 +59,21 @@ typedef struct {
     uint32_t mode_s_code;     /**< Mode-S transponder code (24-bit identifier). */
 
     AircraftState state;      /**< Current ownship kinematic state. */
-} OwnShip; 
+} OwnShip;
+
+/**
+ * @brief 
+ * 
+ */
+typedef struct {
+    double relative_altitude; /**< meters: intruder altitude - ownship altitude. */
+    double distance;          /**< meters: slant range from ownship. */
+    double bearing;           /**< radians: bearing from ownship to intruder. */
+    double closure_rate;      /**< meters/second: positive when closing. */
+    double time_to_impact;    /**< seconds: estimated time to closest approach (may be INFINITY). */
+
+    uint8_t threat_level;     /**< Encoded `ThreatLevel` value (uses `uint8_t` for compactness). */
+} TCAS_Metrics;
 
 /**
  * @brief Data describing a tracked intruder aircraft.
@@ -73,14 +87,8 @@ typedef struct {
     bool isActive;            /**< true if this slot holds a valid intruder. */
     uint32_t mode_s_code;     /**< Mode-S transponder code for the intruder. */
 
-    double relative_altitude; /**< meters: intruder altitude - ownship altitude. */
-    double distance;          /**< meters: slant range from ownship. */
-    double bearing;           /**< radians: bearing from ownship to intruder. */
-    double closure_rate;      /**< meters/second: positive when closing. */
-    double time_to_impact;    /**< seconds: estimated time to closest approach (may be INFINITY). */
-
+    TCAS_Metrics metrics;     /** TCAS-related metrics of the intruder. */
     AircraftState state;      /**< Kinematic state of the intruder. */
-    uint8_t threat_level;     /**< Encoded `ThreatLevel` value (uses `uint8_t` for compactness). */
 } IntruderShip;
 
 /**

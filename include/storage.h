@@ -75,24 +75,15 @@ void set_SimWorld_state(const AircraftState* host_state, uint32_t host_mode_s_co
 /**
  * @brief Store computed relative metrics for an intruder track.
  *
- * @details These values (relative altitude, distance, bearing, closure rate,
- * time to impact and threat level) are typically computed by the
- * TCAS logic and stored for display and audio modules.
+ * @details 
  *
- * @param index Index into the intruder array (0..MAX_TRACK-1).
- * @param relative_altitude Altitude difference relative to ownship (meters).
- * @param distance Slant range distance to the intruder (meters).
- * @param bearing Bearing from ownship to intruder (radians).
- * @param closure_rate Rate at which separation is changing (m/s).
- * @param time_to_impact Estimated time until closest approach (seconds).
- * @param threat_level Threat classification (value from `ThreatLevel`).
+ * @param 
  *
  * \msc
- * TCASLogic, Storage;
- * TCASLogic->Storage [label="update_intruder_data(index, ...)"];
+ * 
  * \endmsc
  */
-void update_intruder_data(int index, double relative_altitude, double distance, double bearing, double closure_rate, double time_to_impact, uint8_t threat_level);
+void update_intruders_tcas_data(const TCAS_Metrics* computed_metrics, int num_intruders);
 
 /**
  * @brief Obtain a thread-safe snapshot of the simulation state.

@@ -30,7 +30,7 @@ void finalize_buffer(void){
     pthread_mutex_destroy(&(simWorld.state_access_lock)); // destroy shared buffer lock
 } // finalize_buffer end
 
-void set_SimWorld_state(const AircraftState* host_state, uint32_t host_mode_s_code,
+void set_SimWorld_state(const AircraftState* host_state, uint32_t host_mode_s_code, // transponder_data thread will call
                         const AircraftState* intruders_state, const uint32_t* intruders_mode_s,
                         int num_intruders){
 
@@ -50,16 +50,13 @@ void set_SimWorld_state(const AircraftState* host_state, uint32_t host_mode_s_co
     pthread_mutex_unlock(&(simWorld.state_access_lock));
 } // set_SimWorld_state
 
-void update_intruder_data(int index, double relative_altitude, double distance, double bearing, double closure_rate, double time_to_impact, uint8_t threat_level){ // tcas_logic thread will call
+void update_intruders_tcas_data(const TCAS_Metrics* computed_metrics, int num_intruders){ // tcas_logic thread will call
     pthread_mutex_lock(&(simWorld.state_access_lock));
 
-    simWorld.intruders[index].relative_altitude = relative_altitude;
-    simWorld.intruders[index].distance = distance;
-    simWorld.intruders[index].bearing = bearing;
-    simWorld.intruders[index].closure_rate = closure_rate;
-    simWorld.intruders[index].time_to_impact = time_to_impact;
-    simWorld.intruders[index].threat_level = threat_level;
-
+    for (int i = 0; i < num_intruders; i++){
+        simWorld.intruders[i].metrics = computed_metrics[i];
+    }
+    
     pthread_mutex_unlock(&(simWorld.state_access_lock));
 } // update_intruder_data end
 
