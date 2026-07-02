@@ -18,7 +18,7 @@
 #include "display.h"
 #include "storage.h"
 #include "transponder_data.h"
-// #include "tcas_logic.h"
+#include "tcas_logic.h"
 
 /**
  * @brief Signal handler that requests a graceful shutdown.
@@ -61,7 +61,7 @@ int main(void){
     // define threads
     pthread_t disp_tid;
     pthread_t transponder_tid;
-    // pthread_t tcas_logic_tid;
+    pthread_t tcas_logic_tid;
 
     // start threads
     printf("[MAIN THREAD] Initializing system threads..\n");
@@ -76,12 +76,11 @@ int main(void){
         return EXIT_FAILURE;
     }
 
-    /*
-    if (pthread_create(&tcas_logic_tid, NULL, , NULL) != 0) {
+    if (pthread_create(&tcas_logic_tid, NULL, tcas_logic_thread, NULL) != 0) {
         perror("[MAIN THREAD] Failed to create tcas logic thread");
         return EXIT_FAILURE;
     }
-    */
+    
 
     // wait until a shutdown is requested
     while (!isShutdownSignaled){
@@ -95,7 +94,7 @@ int main(void){
     fflush(stdout);
     
     pthread_join(transponder_tid, NULL);
-    // pthread_join(tcas_logic_tid, NULL);
+    pthread_join(tcas_logic_tid, NULL);
     
     finalize_buffer(); // finalize storage primitives
 
