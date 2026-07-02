@@ -223,7 +223,7 @@ static void draw_intruders(int max_y, int max_x, int center_y, int center_x){
         char ch = 'O';
         int color_pair = 3; // default: proximate/other (cyan)
 
-        switch (intr->threat_level){
+        switch (intr->metrics.threat_level){
             case THREAT_RA: // resolution advisory
                 ch = 'R';
                 color_pair = 1; // red
@@ -336,7 +336,7 @@ static void render_telemetry(){
         char* threat_str = "PROX";
         int color_pair = 3; // default: proximate/other (cyan)
 
-        switch (intr->threat_level){
+        switch (intr->metrics.threat_level){
             case THREAT_RA: // resolution advisory
                 threat_str = " RA ";
                 color_pair = 1; // red
