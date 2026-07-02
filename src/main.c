@@ -1,8 +1,9 @@
 /**
  * @file main.c
- * @brief 
+ * @brief Application entrypoint for the TCAS II simulator.
  *
- * 
+ * Starts the shared storage layer, installs signal handlers, launches the
+ * worker threads, and waits for a shutdown request.
  * @author Yusuf Efe Aktaş
  * @date 2026-01-27
  */
@@ -19,7 +20,11 @@
 #include "transponder_data.h"
 // #include "tcas_logic.h"
 
-// SIGINT and SIGTERM signal handler
+/**
+ * @brief Signal handler that requests a graceful shutdown.
+ *
+ * @param sig Signal number delivered by the runtime.
+ */
 void SIGINT_SIGTERM_handlerRoutine(int sig){
     int saved_errno = errno; // save current system error context
 
@@ -28,6 +33,11 @@ void SIGINT_SIGTERM_handlerRoutine(int sig){
     errno = saved_errno; // reload current system error context
 } // SIGINT_SIGTERM_handlerRoutine end
 
+/**
+ * @brief Launch the simulator threads and block until shutdown is requested.
+ *
+ * @return int EXIT_SUCCESS on a clean shutdown, EXIT_FAILURE on setup errors.
+ */
 int main(void){
     // sigaction struct 
     struct sigaction sa;

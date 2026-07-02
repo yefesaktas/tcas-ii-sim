@@ -58,14 +58,20 @@ void init_buffer(void);
 void finalize_buffer(void);
 
 /**
- * @brief 
+ * @brief Update the shared simulation state with host and intruder kinematics.
  *
- * @details 
- * 
- * @param
+ * @details Copies the supplied ownship state and active intruder states into
+ * the shared buffer under lock.
+ *
+ * @param host_state Pointer to the current ownship state.
+ * @param host_mode_s_code Mode-S transponder code for the ownship.
+ * @param intruders_state Array of intruder aircraft states.
+ * @param intruders_mode_s Array of intruder Mode-S transponder codes.
+ * @param num_intruders Number of intruder entries to copy from the arrays.
  *
  * \msc
- * 
+ * Producer, Storage;
+ * Producer->Storage [label="set_SimWorld_state()"];
  * \endmsc
  */
 void set_SimWorld_state(const AircraftState* host_state, uint32_t host_mode_s_code,
@@ -73,14 +79,17 @@ void set_SimWorld_state(const AircraftState* host_state, uint32_t host_mode_s_co
                         int num_intruders);
 
 /**
- * @brief Store computed relative metrics for an intruder track.
+ * @brief Store computed relative metrics for each active intruder track.
  *
- * @details 
+ * @details Replaces the cached TCAS metrics for the first `num_intruders`
+ * intruder slots in the shared buffer.
  *
- * @param 
+ * @param computed_metrics Array of computed per-intruder TCAS metrics.
+ * @param num_intruders Number of intruder entries to update.
  *
  * \msc
- * 
+ * Producer, Storage;
+ * Producer->Storage [label="update_intruders_tcas_data()"];
  * \endmsc
  */
 void update_intruders_tcas_data(const TCAS_Metrics* computed_metrics, int num_intruders);

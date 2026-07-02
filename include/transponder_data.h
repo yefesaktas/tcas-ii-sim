@@ -20,7 +20,7 @@
  * @brief Transponder data producer thread.
  *
  * @details This thread simulates periodic transponder broadcasts for the host
- * and intruder aircrafts, updating the shared simulation buffer via the
+ * and intruder aircraft, updating the shared simulation buffer via the
  * `storage` API until `isShutdownSignaled` becomes true.
  *
  * @param arg Optional thread argument (unused, may be NULL).

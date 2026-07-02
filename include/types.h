@@ -62,8 +62,10 @@ typedef struct {
 } OwnShip;
 
 /**
- * @brief 
- * 
+ * @brief Relative tracking metrics for a single intruder aircraft.
+ *
+ * @details These values are computed from the ownship and intruder states and
+ * consumed by the display layer.
  */
 typedef struct {
     double relative_altitude; /**< meters: intruder altitude - ownship altitude. */
@@ -80,8 +82,8 @@ typedef struct {
  *
  * @details `isActive` indicates whether this array slot currently holds a
  * valid intruder. Positional and relative metrics are provided alongside the
- * intruder's full `AircraftState`. `threat_level` stores a value from
- * `ThreatLevel`.
+ * intruder's full `AircraftState`. The embedded `TCAS_Metrics` structure also
+ * carries the current threat classification.
  */
 typedef struct {
     bool isActive;            /**< true if this slot holds a valid intruder. */
