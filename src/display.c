@@ -17,18 +17,11 @@
 #include <math.h>
 #include <time.h>
 
+#include "config.h"
 #include "types.h"
 #include "storage.h"
 
 #define PI 3.14159265
-
-/**
- * @brief Period between display updates (microseconds).
- *
- * The display thread sleeps this long between each
- * render cycle.
- */
-#define DISPLAY_REFRESH_RATE_US 33000 // ~30 fps
 
 static WINDOW* radar_win;
 static WINDOW* telemetry_win;

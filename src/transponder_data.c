@@ -15,24 +15,9 @@
 #include <stdint.h>
 #include <time.h>
 
+#include "config.h"
 #include "types.h"
 #include "storage.h"
-
-/**
- * @brief Period between transponder updates (microseconds).
- *
- * The simulated transponder thread sleeps this long between each
- * broadcast/update cycle.
- */
-#define UPDATE_PERIOD_US 500000
-
-/**
- * @brief Number of intruder aircraft simulated.
- *
- * Set to 1 for the simple test scenario; real simulations may use
- * multiple intruders up to `MAX_TRACK`.
- */
-#define INTRUDERS_NUM 1
 
 static AircraftState host_state;
 static uint32_t host_ModeS;
@@ -148,7 +133,7 @@ void* transponder_data_thread(void* arg){ // thread function
                             (end_time.tv_nsec - start_time.tv_nsec) / 1000L;
 
         // calculate remaining sleep time in microseconds
-        long sleep_time_us = UPDATE_PERIOD_US - work_time_us;
+        long sleep_time_us = TRANSPONDER_UPDATE_PERIOD_US - work_time_us;
 
         // sleep if needed
         if (sleep_time_us > 0){

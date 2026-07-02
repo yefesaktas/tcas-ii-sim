@@ -17,18 +17,11 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-/**
- * @brief Maximum number of intruder tracks supported by the simulation.
- *
- * @details TCAS II version 7.1 can track up to 30 transponder-equipped
- * aircraft simultaneously; this constant bounds the intruder array sizes
- * used throughout the simulator.
- */
-#define MAX_TRACK 30 
-
 #include <pthread.h>
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "config.h"
 
 /** @brief Threat level classification used by the TCAS logic. */
 typedef enum {
