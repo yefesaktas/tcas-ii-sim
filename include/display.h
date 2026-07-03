@@ -8,7 +8,8 @@
  * @date 2026-01-27
  *
  * \msc
- * 
+ * DisplayThread, Storage;
+ * DisplayThread->Storage [label="get_buffer_snapshot()"];
  * \endmsc
  */
 

@@ -1,8 +1,9 @@
 /**
  * @file tcas_logic.c
- * @brief
+ * @brief TCAS advisory computation worker.
  *
- *
+ * Implements the thread that snapshots simulation state, computes intruder
+ * metrics, and publishes the advisory results.
  * @author Yusuf Efe Aktaş
  * @date 2026-01-27
  */
@@ -23,11 +24,11 @@ static TCAS_Metrics local_metrics[MAX_TRACK] = {0};
 static SimulationState tcas_simWorld_buffer;
 
 /**
- * @brief
- *
+ * @brief Snapshot the current simulation state for TCAS processing.
  *
  * \msc
- *
+ * TCASLogicThread, Storage;
+ * TCASLogicThread->Storage [label="get_buffer_snapshot()"];
  * \endmsc
  */
 static void fetch_tcas_data(){
@@ -35,11 +36,11 @@ static void fetch_tcas_data(){
 } // fetch_tcas_data end
 
 /**
- * @brief
- *
+ * @brief Compute per-intruder relative range, closure, and threat metrics.
  *
  * \msc
- *
+ * TCASLogicThread, TCASMetrics;
+ * TCASLogicThread->TCASMetrics [label="compute_tcas_metrics()"];
  * \endmsc
  */
 static void compute_tcas_metrics(){

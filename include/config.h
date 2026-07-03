@@ -47,16 +47,12 @@
 #define INTRUDERS_NUM 1
 
 /**
- * @brief 
- *
- * 
+ * @brief TAU threshold in seconds for triggering a resolution advisory.
  */
 #define TAU_RA_THRESHOLD 25.0 
 
 /**
- * @brief 
- *
- * 
+ * @brief TAU threshold in seconds for triggering a traffic advisory.
  */
 #define TAU_TA_THRESHOLD 40.0
 
