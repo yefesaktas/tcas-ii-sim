@@ -19,6 +19,7 @@
 #include "config.h"
 #include "types.h"
 #include "storage.h"
+#include "audio.h"
 
 static TCAS_Metrics local_metrics[MAX_TRACK] = {0};
 static SimulationState tcas_simWorld_buffer;
@@ -121,6 +122,24 @@ void* tcas_logic_thread(void* arg){ // thread function
         // store all the computed data in the shared buffer
         update_intruders_tcas_data(local_metrics, INTRUDERS_NUM);
 
+        // audible warning logic
+        ThreatLevel highest_threat = THREAT_NONE;
+
+        for (int i = 0; i < INTRUDERS_NUM; i++) {
+            // if a higher threat level exists, update threat_level (RA > TA > NONE)
+            if (local_metrics[i].threat_level == THREAT_RA) {
+                highest_threat = THREAT_RA;
+                break; // there is no higher threat than RA, break loop
+            } 
+            else if (local_metrics[i].threat_level == THREAT_TA) {
+                highest_threat = THREAT_TA; 
+                // continue loop to search if an RA exists
+            }
+        }
+
+        process_audio_alerts(highest_threat);
+
+        // dynamic sleep logic
         clock_gettime(CLOCK_MONOTONIC, &end_time);
 
         // calculate duration of operations in microseconds
