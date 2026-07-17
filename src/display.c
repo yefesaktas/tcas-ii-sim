@@ -14,6 +14,7 @@
 #include <locale.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <time.h>
 
@@ -26,7 +27,71 @@
 static WINDOW* radar_win;
 static WINDOW* telemetry_win;
 static WINDOW* status_win;
+static WINDOW* range_win;
+static WINDOW* mode_win;
 static SimulationState display_simWorld_buffer;
+
+static const char* advisory_banner_text = NULL;
+static int advisory_banner_color = 2;
+
+static ThreatLevel get_highest_display_threat(void){
+    ThreatLevel highest = THREAT_NONE;
+
+    for (int i = 0; i < MAX_TRACK; ++i){
+        const IntruderShip* intr = &display_simWorld_buffer.intruders[i];
+
+        if (!intr->isActive){
+            continue;
+        }
+
+        if (intr->metrics.threat_level == THREAT_RA){
+            return THREAT_RA;
+        }
+
+        if (intr->metrics.threat_level == THREAT_TA){
+            highest = THREAT_TA;
+        }
+    }
+
+    return highest;
+}
+
+static void update_advisory_banner_state(){
+    ThreatLevel highest_threat = get_highest_display_threat();
+
+    if (highest_threat == THREAT_RA){
+        advisory_banner_text = "CLIMB CLIMB";
+        advisory_banner_color = 1;
+    }
+    else if (highest_threat == THREAT_TA){
+        advisory_banner_text = "TRAFFIC";
+        advisory_banner_color = 2;
+    }
+    else {
+        advisory_banner_text = NULL;
+    }
+}
+
+static void draw_advisory_banner(int max_y, int max_x){
+    if (advisory_banner_text == NULL){
+        return;
+    }
+
+    int start_y = max_y - 4;
+    int start_x = max_x - (int)strlen(advisory_banner_text) - 4;
+
+    if (start_y < 1){
+        start_y = 1;
+    }
+
+    if (start_x < 1){
+        start_x = 1;
+    }
+
+    wattron(radar_win, COLOR_PAIR(advisory_banner_color) | A_BOLD);
+    mvwprintw(radar_win, start_y, start_x, "%s", advisory_banner_text);
+    wattroff(radar_win, COLOR_PAIR(advisory_banner_color) | A_BOLD);
+}
 
 /**
  * @brief Initialize ncurses display with windows and color pairs.
@@ -61,6 +126,21 @@ static void init_display(){
     telemetry_win = newwin(LINES - status_height, right_width, 0, radar_width);
     status_win = newwin(status_height, right_width, LINES - status_height, radar_width);
 
+    // create a small range info window as a subwindow on the bottom-left
+    // of the radar window so it appears over the radar area
+    int radar_max_y = getmaxy(radar_win);
+
+    int range_h = 4;
+    int range_w = 9;
+
+    // place the subwindow one row above the bottom border and with 1-column padding
+    range_win = derwin(radar_win, range_h, range_w, radar_max_y - range_h - 1, 1);
+
+    // create a tiny mode window immediately to the right of the range window
+    int mode_h = range_h;
+    int mode_w = 11;
+    mode_win = derwin(radar_win, mode_h, mode_w, radar_max_y - mode_h - 1, 1 + range_w + 1);
+
     // set window background colors
     wbkgd(radar_win, COLOR_PAIR(5));
     wbkgd(telemetry_win, COLOR_PAIR(5));
@@ -82,6 +162,14 @@ static void destroy_display(){
 
     if (status_win != NULL){
         delwin(status_win);
+    }
+
+    if (range_win != NULL){
+        delwin(range_win);
+    }
+
+    if (mode_win != NULL){
+        delwin(mode_win);
     }
 
     endwin(); // exit ncurses textual ui mode
@@ -252,6 +340,31 @@ static void render_radar(){
 
     draw_radar_background(max_y, max_x, center_y, center_x);
     draw_intruders(max_y, max_x, center_y, center_x);
+    draw_advisory_banner(max_y, max_x);
+
+    // draw the small range info subwindow on top of the radar
+    // TODO: TCAS range will be changeable in future
+    if (range_win != NULL) {
+        werase(range_win);
+        box(range_win, 0, 0);
+        wattron(range_win, COLOR_PAIR(3) | A_BOLD); // cyan and bold
+        mvwprintw(range_win, 1, 3, "RNG");
+        mvwprintw(range_win, 2, 2, "30 NM");
+        wattroff(range_win, COLOR_PAIR(3) | A_BOLD);
+        wnoutrefresh(range_win);
+    }
+
+    // draw current TCAS mode
+    // TODO: TCAS mode will be changeable in future
+    if (mode_win != NULL) {
+        werase(mode_win);
+        box(mode_win, 0, 0);
+        wattron(mode_win, COLOR_PAIR(4) | A_BOLD); // green and bold
+        mvwprintw(mode_win, 1, 1, "XPDR MODE");
+        mvwprintw(mode_win, 2, 3, "TA/RA");
+        wattroff(mode_win, COLOR_PAIR(4) | A_BOLD);
+        wnoutrefresh(mode_win);
+    }
 
     wnoutrefresh(radar_win); // queue window changes in memory
 } // render_radar end
@@ -344,9 +457,19 @@ static void render_telemetry(){
                 break; // keep defaults
         } // switch-case end
 
-        // format: TRK ID | THREAT | DISTANCE | RELATIVE ALTITUDE (add mode_s in future)
+        // format: TRK ID | THREAT | DISTANCE | RELATIVE ALTITUDE | TIME TO IMPACT
+        // TODO: Also show mode-s code
+        double tau = intr->metrics.time_to_impact;
+        char tau_str[16];
+
+        if (isfinite(tau)){
+            snprintf(tau_str, sizeof(tau_str), "%.1f s", tau);
+        } else {
+            snprintf(tau_str, sizeof(tau_str), "-");
+        }
+
         wattron(telemetry_win, COLOR_PAIR(color_pair));
-        mvwprintw(telemetry_win, print_line, 2, "TRK %02d | %s | %4.1f NM | %+5.0f ft", i, threat_str, distance_nm, rel_alt_ft);
+        mvwprintw(telemetry_win, print_line, 2, "TRK %02d | %s | %4.1f NM | %+5.0f ft | %5s", i, threat_str, distance_nm, rel_alt_ft, tau_str);
         wattroff(telemetry_win, COLOR_PAIR(color_pair));
 
         print_line += 2; // add 1 line interval between entries
@@ -387,24 +510,12 @@ static void render_status(){
 
     box(status_win, 0, 0); // draw window border
 
-    // draw current TCAS mode
-    // TODO: TCAS mode will be changeable in future
-    wattron(status_win, COLOR_PAIR(4) | A_BOLD); // green and bold
-    mvwprintw(status_win, 1, 2, "MODE: TA/RA");
-    wattroff(status_win, COLOR_PAIR(4) | A_BOLD);
-
-    // draw current range
-    // TODO: TCAS range will be changeable in future
-    wattron(status_win, COLOR_PAIR(3) | A_BOLD); // cyan and bold
-    mvwprintw(status_win, 1, 14, "RNG: 30 NM");
-    wattroff(status_win, COLOR_PAIR(3) | A_BOLD);
-
     // draw system status
-    mvwprintw(status_win, 1, 25, "SYS: OK");
+    mvwprintw(status_win, 1, 2, "Frame Time: %5.2f ms | Jitter: %+6.2f ms", elapsed_ms, jitter);
 
-    mvwprintw(status_win, 1, max_x - 16, "CTRL+C to Exit");
+    mvwprintw(status_win, 2, 2, "SYS: OK");
 
-    mvwprintw(status_win, 2, 2, "Frame Time: %5.2f ms | Jitter: %+6.2f ms", elapsed_ms, jitter);
+    mvwprintw(status_win, 4, max_x - 16, "CTRL+C to Exit");
 
     wnoutrefresh(status_win); // queue window changes in memory
 } // render_status end
@@ -418,6 +529,8 @@ void* display_thread(void* arg){ // thread function
         clock_gettime(CLOCK_MONOTONIC, &start_time);
 
         fetch_display_data();
+
+        update_advisory_banner_state();
 
         // render all windows in memory
         render_radar();
